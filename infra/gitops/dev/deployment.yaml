@@ -28,7 +28,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: k8s-minio
-          image: ghcr.io/champalab/k8s-minio:180c01bdafbaeab3434009e720270a9bfcd5727c
+          image: ghcr.io/champalab/k8s-minio:ece2fcf99c0f0dcf1c9e12a6e0c1897871bff453
           imagePullPolicy: Always
           resources:
             requests:
