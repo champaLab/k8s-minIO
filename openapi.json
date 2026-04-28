@@ -1,0 +1,1269 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "e-Visa Partner API",
+    "version": "1.0.0",
+    "description": "Partner API for e-Visa application management, payments, and reporting."
+  },
+  "servers": [
+    {
+      "url": "/partner-api-dev/v1",
+      "description": "API v1"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Admin JWT token (RS256)"
+      },
+      "partnerApiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "Partner API key"
+      }
+    },
+    "schemas": {
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "error"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints"
+    },
+    {
+      "name": "Applications",
+      "description": "Visa application management"
+    },
+    {
+      "name": "Components",
+      "description": "Form components (countries, visa types, etc.)"
+    },
+    {
+      "name": "Partners",
+      "description": "Partner management"
+    },
+    {
+      "name": "Reports",
+      "description": "Dashboards and reports"
+    },
+    {
+      "name": "Utilities",
+      "description": "MQTT, callbacks, etc."
+    }
+  ],
+  "paths": {
+    "/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Admin login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username",
+                  "password"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login success",
+            "returns JWT": null
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/partner/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Partner login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login success",
+            "returns tokens": null
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/partner/me": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Get access token for partner (requires refresh token)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns access token"
+          }
+        }
+      }
+    },
+    "/partner/refresh-token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Refresh partner token",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns new tokens"
+          }
+        }
+      }
+    },
+    "/applications/create": {
+      "post": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Create visa application",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "partnerApiKey": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "country_of_passport"
+                ],
+                "properties": {
+                  "country_of_passport": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application created"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/applications/payment": {
+      "post": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Pay for application",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "partnerApiKey": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "application_id",
+                  "signature_key"
+                ],
+                "properties": {
+                  "application_id": {
+                    "type": "string",
+                    "minLength": 7,
+                    "maxLength": 10
+                  },
+                  "signature_key": {
+                    "type": "string",
+                    "maxLength": 255
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment processed"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/applications": {
+      "get": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "List applications",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of applications"
+          }
+        }
+      }
+    },
+    "/applications/{id}": {
+      "get": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Get application by ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application details"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Update application",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "first_name": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "last_name": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "gender": {
+                    "type": "string",
+                    "enum": [
+                      "male",
+                      "female"
+                    ]
+                  },
+                  "date_of_birth": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "country_of_birth": {
+                    "type": "number"
+                  },
+                  "phone_number": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "occupation": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "residential_address": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "province": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "country_of_city": {
+                    "type": "number"
+                  },
+                  "passport_number": {
+                    "type": "string",
+                    "maxLength": 45
+                  },
+                  "issue_date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "expire_date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "intended_date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "country_of_passport": {
+                    "type": "number"
+                  },
+                  "visa_type": {
+                    "type": "number"
+                  },
+                  "vehicle": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "purpose_of_trip": {
+                    "type": "number"
+                  },
+                  "address_during_visit": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "next_destination": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "signature_key": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "upload_file_photo": {
+                    "type": "string"
+                  },
+                  "upload_file_passport": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application updated"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/applications/status": {
+      "post": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Check application status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "application_id",
+                  "passport_number"
+                ],
+                "properties": {
+                  "application_id": {
+                    "type": "string",
+                    "minLength": 7,
+                    "maxLength": 7
+                  },
+                  "passport_number": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application status"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/applications/approve-information": {
+      "post": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Get approved application information",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "application_id",
+                  "passport_number"
+                ],
+                "properties": {
+                  "application_id": {
+                    "type": "string",
+                    "minLength": 7,
+                    "maxLength": 7
+                  },
+                  "passport_number": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Approved information"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/download/application/pdf": {
+      "post": {
+        "tags": [
+          "Applications"
+        ],
+        "summary": "Download application PDF",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "application_id",
+                  "passport_number"
+                ],
+                "properties": {
+                  "application_id": {
+                    "type": "string",
+                    "minLength": 7,
+                    "maxLength": 7
+                  },
+                  "passport_number": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "PDF file"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/send-message-queue": {
+      "post": {
+        "tags": [
+          "Utilities"
+        ],
+        "summary": "Send message to queue (test)",
+        "responses": {
+          "200": {
+            "description": "Message sent"
+          }
+        }
+      }
+    },
+    "/simulate/partner/callback": {
+      "post": {
+        "tags": [
+          "Utilities"
+        ],
+        "summary": "Simulate partner callback",
+        "responses": {
+          "200": {
+            "description": "Callback acknowledged"
+          }
+        }
+      }
+    },
+    "/component/form": {
+      "get": {
+        "tags": [
+          "Components"
+        ],
+        "summary": "Get form components (countries, visa types, port entry, purpose)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Form components data"
+          }
+        }
+      }
+    },
+    "/partners": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "List all partners",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of partners"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "Create partner",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "partner_name": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "callback_url": {
+                    "type": "string"
+                  },
+                  "partner_token": {
+                    "type": "string"
+                  },
+                  "is_limit": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Partner created"
+          }
+        }
+      }
+    },
+    "/partners/{partner_id}": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "Get partner by ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "partner_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Partner details"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "Update partner",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "partner_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "partner_name": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "callback_url": {
+                    "type": "string"
+                  },
+                  "partner_token": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "number"
+                  },
+                  "is_limit": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Partner updated"
+          }
+        }
+      }
+    },
+    "/partners/{partner_id}/password": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "Update partner password",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "partner_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Password updated"
+          }
+        }
+      }
+    },
+    "/partner/wallets": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "Get partner wallets",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of partner wallets"
+          }
+        }
+      }
+    },
+    "/partners/{partner_id}/wallet": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "Top up partner wallet",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "partner_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Wallet topped up"
+          }
+        }
+      }
+    },
+    "/partners/{partner_id}/status": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "Change partner wallet status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "partner_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status updated"
+          }
+        }
+      }
+    },
+    "/report/dashboard": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Admin dashboard report (manager only)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard data"
+          }
+        }
+      }
+    },
+    "/report/partners/apply": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Partners apply report (manager only)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Apply report data"
+          }
+        }
+      }
+    },
+    "/report/partners/wallet": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Partners wallet report (manager only)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Wallet report data"
+          }
+        }
+      }
+    },
+    "/report/partners/application-request": {
+      "post": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Application request report (manager only)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "start_date",
+                  "end_date"
+                ],
+                "properties": {
+                  "start_date": {
+                    "type": "string"
+                  },
+                  "end_date": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application request report"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/report/partners/application-apply": {
+      "post": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Application apply report (manager only)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "start_date",
+                  "end_date"
+                ],
+                "properties": {
+                  "start_date": {
+                    "type": "string"
+                  },
+                  "end_date": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application apply report"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/report/partners/application-enquery": {
+      "post": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Application enquery report (partner/manager)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "start_date",
+                  "end_date"
+                ],
+                "properties": {
+                  "start_date": {
+                    "type": "string"
+                  },
+                  "end_date": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application enquery report"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/report/partners/application-enquery-search": {
+      "post": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Search application enquery (partner/manager)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "partner_id",
+                  "search"
+                ],
+                "properties": {
+                  "partner_id": {
+                    "type": "string"
+                  },
+                  "search": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/report/partners/{partner_id}/dashboard": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Partner dashboard (partner/manager)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "partner_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Partner dashboard data"
+          }
+        }
+      }
+    },
+    "/report/partners/topup-report": {
+      "post": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Partner top-up report (partner/manager)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "partner_id",
+                  "start_date",
+                  "end_date"
+                ],
+                "properties": {
+                  "partner_id": {
+                    "type": "string"
+                  },
+                  "start_date": {
+                    "type": "string"
+                  },
+                  "end_date": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Top-up report"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/report/admin/topup-report": {
+      "post": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Admin top-up report (manager only)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "start_date",
+                  "end_date"
+                ],
+                "properties": {
+                  "start_date": {
+                    "type": "string"
+                  },
+                  "end_date": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Admin top-up report"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/send-message": {
+      "post": {
+        "tags": [
+          "Utilities"
+        ],
+        "summary": "Send MQTT message",
+        "responses": {
+          "200": {
+            "description": "Message sent"
+          }
+        }
+      }
+    }
+  }
+}

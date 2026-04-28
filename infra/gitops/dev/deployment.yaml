@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-minio
+  namespace: dev
+  labels:
+    app: k8s-minio
+spec:
+  selector:
+    matchLabels:
+      app: k8s-minio
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: k8s-minio
+    spec:
+      # initContainers:
+      # Init containers are exactly like regular containers, except:
+      # - Init containers always run to completion.
+      # - Each init container must complete successfully before the next one starts.
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: k8s-minio
+          image: ghcr.io/champalab/k8s-minio:c6576d8778b04d558067b113968f7bd93f44b9e5
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 500m
+              memory: 100Mi
+            limits:
+              cpu: 2000m
+              memory: 2048Mi
+          livenessProbe:
+            tcpSocket:
+              port: 6767
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 6767
+            initialDelaySeconds: 5
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 3
+            periodSeconds: 10
+          envFrom:
+            - configMapRef:
+                name: k8s-minio-config
+            - secretRef:
+                name: db-mas
+          ports:
+            - containerPort: 6767
+              name: http
+          volumeMounts:
+            - name: localtime
+              mountPath: /etc/localtime
+      hostAliases:
+        - ip: 10.2.101.70
+          hostnames:
+            - domain.com
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Bangkok
+      # - name: vol-partner-api-uat
+      #   # _type: nfs
+      #   nfs:
+      #     path: /gv0
+      #     server: gfs-01
+      restartPolicy: Always

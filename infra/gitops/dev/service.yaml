@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8s-minio-service
+  namespace: dev
+spec:
+  selector:
+    app: k8s-minio
+  type: NodePort
+  sessionAffinity: None
+  externalTrafficPolicy: Cluster
+  internalTrafficPolicy: Cluster
+  ports:
+    - name: k8s-minio-service-port
+      protocol: TCP
+      port: 80
+      targetPort: 6767
+      nodePort: 30002
