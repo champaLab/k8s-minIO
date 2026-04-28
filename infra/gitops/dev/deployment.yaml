@@ -56,8 +56,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: k8s-minio-config
-            - secretRef:
-                name: db-mas
+            # - secretRef:
+            #     name: db-mas
           ports:
             - containerPort: 6767
               name: http
