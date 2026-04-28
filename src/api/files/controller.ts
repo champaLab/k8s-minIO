@@ -100,6 +100,8 @@ function buildPublicApiUrl(req: Request, pathname: string, query: Record<string,
   const protocol = protoHeader || req.protocol
   const host = hostHeader
   const basePath = `${env.BASE_PATH || '/api'}`.replace(/\/+$/g, '')
+
+  // This project mounts the router at `${BASE_PATH}/v1` in `src/app.ts`
   const apiPrefix = `${basePath}/v1`
 
   const u = new URL(`${protocol}://${host}${apiPrefix}${pathname}`)
@@ -149,4 +151,3 @@ export async function renderUrlController(req: Request, res: Response) {
   const url = buildPublicApiUrl(req, '/files/render', { key, filename })
   return res.json({ status: 'success', url })
 }
-
