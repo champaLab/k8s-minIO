@@ -9,7 +9,7 @@ import { validateCreateUser, validateUpdateUser } from './api/user/validate'
 import { createPhoneController, deletePhoneController, getPhoneListController, updatePhoneController } from './api/phone/controller'
 import { validateCreatePhone, validateUpdatePhone } from './api/phone/validate'
 import { getDashboardController } from './api/dashboard/controllor'
-import { downloadFromS3Controller, uploadMemory, uploadToS3Controller } from './api/files/controller'
+import { downloadFromS3Controller, renderFromS3Controller, renderUrlController, uploadMemory, uploadToS3Controller } from './api/files/controller'
 
 const router = Router()
 
@@ -46,5 +46,7 @@ router.delete('/phone', verify, checkRole(['ADMIN']), deletePhoneController)
 // Files (S3)
 router.post('/files/upload', uploadMemory.single('file'), uploadToS3Controller)
 router.get('/files/download', downloadFromS3Controller)
+router.get('/files/render', renderFromS3Controller)
+router.get('/files/render-url', renderUrlController)
 
 export default router
